@@ -1,0 +1,26 @@
+Users should be able to create a new map instance from the available map images so that they can have a collection of area maps
+Users should be able to place dots on a map so that they can keep track of a rare mob's spawn locations
+Users should be able to name the dots they place so that they know which rare mob the dot represents
+Users should be able to assign a upper and lower bound spawn timer to the dots so they know when the rare mob is spawning
+Users should be able to customize the dots so they are distinguishable from other mob dots
+When a user clicks a mob dot, it should highlight all the mob dots with the same mob and timer 
+Users should be able to reset the mob spawn timers so that they can align the timer to the in-game spawn time
+Users should be able to delete mob dots so that they can unclutter the map
+Users should be able to select and change the displayed map to other maps in their collection so they can track mobs in multiple locations
+Users should be able to share their map with other users so that they can colaborate on rare mob tags
+Users should be able to delete maps from their collection so they can remove uneccessary maps
+
+
+Firebase database structure:
+
+Users (collection)
+    User (document)
+        Maps (collection)
+            Map (document)
+                location name (field)
+                Mob dots (collection)
+                    Mob dot (document)
+                        mob name (field)
+                        lower bound timer (field)
+                        upper bound timer (field)
+                        dot coordinates: [[x,y], [x,y], [x,y]] (field)
