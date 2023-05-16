@@ -1,56 +1,42 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:mobmapper/wrapper.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+      options: FirebaseOptions(
+          apiKey: "AIzaSyD5VWVKF8fVISY3YhCr0_AQZyJllKp32Po",
+          appId: "1:88089412606:web:12e0613223d9be61cdb6af",
+          messagingSenderId: "G-XN2YFVR907",
+          projectId: "mob-mapper"));
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  MyApp({super.key});
+
+  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Image Change App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: MyHomePage(title: 'Image Change App'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key, this.title}) : super(key: key);
-
-  final String? title;
-
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  String dropdownValue = 'Image1';
-  Map<String, String> images = {
-    'Image1': 'assets/maps/ungoro.png',
-    'Image2': 'https://placekitten.com/400/500',
-    'Image3': 'https://placekitten.com/600/700',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50.0), // here the desired height
-        child: AppBar(
-          title: Text('Fixed AppBar'),
-          centerTitle: true,
-        ),
-      ),
-      body: Center(
-        child: Image.network(
-          images[dropdownValue]!,
-          fit: BoxFit.cover,
-          height: MediaQuery.of(context).size.height,
-          width: MediaQuery.of(context).size.width,
-        ),
+      home: FutureBuilder(
+        future: _initialization,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            print("${snapshot.error}/tmain.dart");
+          } else {
+            return MaterialApp(
+              initialRoute: '/',
+              routes: {
+                '/': (context) => Wrapper(),
+              },
+            );
+          }
+          return CircularProgressIndicator();
+        },
       ),
     );
   }
