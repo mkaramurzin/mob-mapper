@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import '../services/auth.dart';
 
 class Loading extends StatefulWidget {
   const Loading({super.key});
@@ -9,17 +10,18 @@ class Loading extends StatefulWidget {
 }
 
 class _LoadingState extends State<Loading> {
-
+  final AuthService _auth = AuthService();
+  late BuildContext _context;
+  
   void setup() async {
-    Navigator.pushReplacementNamed(context, '/home', arguments: {
-      
-    });
+    await Future.delayed(Duration.zero);
+    Navigator.pushNamedAndRemoveUntil(context, '/map', (route) => false);
   }
 
   @override
   void initState() {
     super.initState();
-    
+    setup();
   }
 
   @override

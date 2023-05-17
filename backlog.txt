@@ -9,6 +9,7 @@ Users should be able to delete mob dots so that they can unclutter the map
 Users should be able to select and change the displayed map to other maps in their collection so they can track mobs in multiple locations
 Users should be able to share their map with other users so that they can colaborate on rare mob tags
 Users should be able to delete maps from their collection so they can remove uneccessary maps
+Users should be able to sign in anonymously so they can use some of the web app features without committing to an account
 
 
 Firebase database structure:
@@ -17,6 +18,7 @@ Users (collection)
     User (document)
         Maps (collection)
             Map (document)
+                map name (field)
                 location name (field)
                 Mob dots (collection)
                     Mob dot (document)
