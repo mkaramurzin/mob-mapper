@@ -11,8 +11,16 @@ class Map extends StatefulWidget {
 
 class _MapState extends State<Map> {
   final AuthService _auth = AuthService();
-  List mapOptions = ['maps/silithus.png', 'maps/ungoro.png'];
-  late String map;
+  List mapOptions = ['silithus', 'ungoro'];
+  Future<String?>? map;
+  final List<Offset> _points = <Offset>[];
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch the map data
+    map = Database(uid: _auth.user!.uid).map;
+  }
 
   void menuOption(int option) async {
     switch (option) {
@@ -32,13 +40,15 @@ class _MapState extends State<Map> {
                     itemBuilder: (context, index) {
                       return GestureDetector(
                         onTap: () async {
-                          print('Map ${index + 1} clicked');
                           Navigator.of(context).pop();
                           await Database(uid: _auth.user!.uid)
                               .addMap(mapOptions[index]);
+                          setState(() {
+                            map = Database(uid: _auth.user!.uid).map;
+                          });
                         },
                         child: Image.asset(
-                          mapOptions[index],
+                          'maps/${mapOptions[index]}.png',
                           fit: BoxFit.cover,
                         ),
                       );
@@ -57,7 +67,7 @@ class _MapState extends State<Map> {
         break;
     }
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,6 +110,58 @@ class _MapState extends State<Map> {
             ],
           )
         ],
+      ),
+
+      body: Container(
+        constraints: BoxConstraints.expand(),
+        child: Stack(
+          children: <Widget>[
+            FutureBuilder<String?>(
+              future: map,
+              builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        '${snapshot.error} occurred',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    );
+                  } else if (snapshot.hasData) {
+                    final map = snapshot.data!;
+                    return Positioned.fill(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTapUp: (TapUpDetails details) {
+                          setState(() {
+                            _points.add(details.localPosition);
+                          });
+                          print('Point added: ${details.localPosition}');
+                        },
+                        child: Image.asset(
+                          'maps/${map}.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  } else {
+                    // map is null
+                    return Center(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Open the map popup
+                          menuOption(0);
+                        },
+                        child: Text('Add Map'),
+                      ),
+                    );
+                  }
+                }
+                return const CircularProgressIndicator();
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
