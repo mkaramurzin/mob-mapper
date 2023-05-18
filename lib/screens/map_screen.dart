@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth.dart';
+import 'package:mobmapper/services/database.dart';
 
 class Map extends StatefulWidget {
   const Map({super.key});
@@ -10,17 +11,46 @@ class Map extends StatefulWidget {
 
 class _MapState extends State<Map> {
   final AuthService _auth = AuthService();
+  List mapOptions = ['maps/silithus.png', 'maps/ungoro.png'];
+  late String map;
 
   void menuOption(int option) async {
     switch (option) {
       case 0:
-        print('b1');
+        showDialog(
+            context: context,
+            builder: (context) {
+              return Dialog(
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: GridView.builder(
+                    itemCount: mapOptions.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, // adjust as needed
+                    ),
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onTap: () async {
+                          print('Map ${index + 1} clicked');
+                          Navigator.of(context).pop();
+                          await Database(uid: _auth.user!.uid)
+                              .addMap(mapOptions[index]);
+                        },
+                        child: Image.asset(
+                          mapOptions[index],
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            });
         break;
-
       case 1:
         print('b2');
         break;
-
       case 2:
         await _auth.signOut();
         Navigator.pushReplacementNamed(context, '/');

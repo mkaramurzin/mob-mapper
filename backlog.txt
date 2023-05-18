@@ -16,10 +16,11 @@ Firebase database structure:
 
 Users (collection)
     User (document)
+        current map (field)
         Maps (collection)
             Map (document)
+                map selection (field)
                 map name (field)
-                location name (field)
                 Mob dots (collection)
                     Mob dot (document)
                         mob name (field)
