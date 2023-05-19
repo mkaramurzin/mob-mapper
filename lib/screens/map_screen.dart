@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth.dart';
 import 'package:mobmapper/services/database.dart';
+import 'package:mobmapper/models/map.dart';
 
 class Map extends StatefulWidget {
   const Map({super.key});
@@ -12,7 +13,8 @@ class Map extends StatefulWidget {
 class _MapState extends State<Map> {
   final AuthService _auth = AuthService();
   List mapOptions = ['silithus', 'ungoro'];
-  Future<String?>? map;
+  Future<GameMap?>? map;
+  List<GameMap>? userMaps;
   final List<Offset> _points = <Offset>[];
 
   @override
@@ -20,6 +22,11 @@ class _MapState extends State<Map> {
     super.initState();
     // Fetch the map data
     map = Database(uid: _auth.user!.uid).map;
+    updateMaps(); // Fetch maps
+  }
+
+  Future<void> updateMaps() async {
+    userMaps = await Database(uid: _auth.user!.uid).allMaps;
   }
 
   void menuOption(int option) async {
@@ -41,11 +48,11 @@ class _MapState extends State<Map> {
                       return GestureDetector(
                         onTap: () async {
                           Navigator.of(context).pop();
-                          await Database(uid: _auth.user!.uid)
-                              .addMap(mapOptions[index]);
+                          await Database(uid: _auth.user!.uid).addMap(new GameMap(name: mapOptions[index], selection: mapOptions[index]));
                           setState(() {
                             map = Database(uid: _auth.user!.uid).map;
                           });
+                          await updateMaps();  // Fetch maps again after adding new one
                         },
                         child: Image.asset(
                           'maps/${mapOptions[index]}.png',
@@ -74,11 +81,42 @@ class _MapState extends State<Map> {
       appBar: AppBar(
         title: Text('Mob Mapper'),
         actions: [
-          ElevatedButton(
-            onPressed: () {
-              print('Maps clicked');
-            },
-            child: Text('Maps'),
+          MouseRegion(
+            child: GestureDetector(
+              onTap: () async {
+                await updateMaps();
+              },
+              child: PopupMenuButton<GameMap>(
+                tooltip: "",
+                child: ElevatedButton(
+                  onPressed: null, // Disable default action
+                  child: Text('Maps', style: TextStyle(color: Colors.white)),
+                ),
+                onSelected: (GameMap result) {
+                  setState(() {
+                    map = Future.value(result);
+                  });
+                },
+                itemBuilder: (BuildContext context) {
+                  return (userMaps ?? []).map((GameMap map) {
+                    return PopupMenuItem<GameMap>(
+                      value: map,
+                      child: Row(
+                        children: <Widget>[
+                          Image.asset(
+                            'maps/${map.selection}.png',
+                            width: 50,
+                            height: 50,
+                          ),
+                          SizedBox(width: 20),
+                          Text(map.name),
+                        ],
+                      ),
+                    );
+                  }).toList();
+                },
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -111,14 +149,13 @@ class _MapState extends State<Map> {
           )
         ],
       ),
-
       body: Container(
         constraints: BoxConstraints.expand(),
         child: Stack(
           children: <Widget>[
-            FutureBuilder<String?>(
+            FutureBuilder<GameMap?>(
               future: map,
-              builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
+              builder: (BuildContext context, AsyncSnapshot<GameMap?> snapshot) {
                 if (snapshot.connectionState == ConnectionState.done) {
                   if (snapshot.hasError) {
                     return Center(
@@ -139,7 +176,7 @@ class _MapState extends State<Map> {
                           print('Point added: ${details.localPosition}');
                         },
                         child: Image.asset(
-                          'maps/${map}.png',
+                          'maps/${map.selection}.png',
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -159,6 +196,18 @@ class _MapState extends State<Map> {
                 }
                 return const CircularProgressIndicator();
               },
+            ),
+            ..._points.map(
+              (Offset offset) => Positioned(
+                left: offset.dx,
+                top: offset.dy,
+                child: IconButton(
+                  icon: Icon(Icons.circle, color: Colors.red),
+                  onPressed: () {
+                    print('Clicked on point: $offset');
+                  },
+                ),
+              ),
             ),
           ],
         ),

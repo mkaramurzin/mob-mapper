@@ -1,4 +1,4 @@
-Users should be able to create a new map instance from the available map images so that they can have a collection of area maps
+X Users should be able to create a new map instance from the available map images so that they can have a collection of area maps
 Users should be able to place dots on a map so that they can keep track of a rare mob's spawn locations
 Users should be able to name the dots they place so that they know which rare mob the dot represents
 Users should be able to assign a upper and lower bound spawn timer to the dots so they know when the rare mob is spawning
