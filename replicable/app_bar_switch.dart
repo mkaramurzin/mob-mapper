@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/auth.dart';
+import 'package:mobmapper/services/auth.dart';
 import 'package:mobmapper/services/database.dart';
 import 'package:mobmapper/models/map.dart';
-import 'package:mobmapper/widgets/add_mob_bar.dart';
 
 class Map extends StatefulWidget {
   const Map({super.key});
@@ -18,6 +17,9 @@ class _MapState extends State<Map> {
   List<GameMap>? userMaps;
   final List<Offset> _points = <Offset>[];
   bool _addingMob = false;
+  String _mobName = '';
+  TimeOfDay? _lowerBound;
+  TimeOfDay? _upperBound;
 
   @override
   void initState() {
@@ -42,23 +44,119 @@ class _MapState extends State<Map> {
     print('Point added: ${details.localPosition}');
   }
 
- PreferredSizeWidget buildAppBar(BuildContext context) {
+  Future<void> selectTime(BuildContext context, bool isLowerBound) async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (pickedTime != null) {
+      setState(() {
+        if (isLowerBound) {
+          _lowerBound = pickedTime;
+        } else {
+          _upperBound = pickedTime;
+        }
+      });
+    }
+  }
+
+  void menuOption(int option) async {
+    switch (option) {
+      case 0:
+        showDialog(
+            context: context,
+            builder: (context) {
+              return Dialog(
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: GridView.builder(
+                    itemCount: mapOptions.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, // adjust as needed
+                    ),
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onTap: () async {
+                          Navigator.of(context).pop();
+                          await Database(uid: _auth.user!.uid).addMap(
+                              new GameMap(
+                                  name: mapOptions[index],
+                                  selection: mapOptions[index]));
+                          setState(() {
+                            map = Database(uid: _auth.user!.uid).map;
+                          });
+                          await updateMaps(); // Fetch maps again after adding new one
+                        },
+                        child: Image.asset(
+                          'maps/${mapOptions[index]}.png',
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            });
+        break;
+      case 1:
+        print('b2');
+        break;
+      case 2:
+        await _auth.signOut();
+        Navigator.pushReplacementNamed(context, '/');
+        break;
+    }
+  }
+
+  AppBar buildAppBar(BuildContext context) {
     if (_addingMob) {
-      return AddMobAppBar(
-        onCancel: () {
-          setState(() {
-            _addingMob = false;
-            if (_points.isNotEmpty) _points.removeLast();  // remove the last added point
-          });
-        },
-        onDone: (mobName, lowerBound, upperBound, lastPoint) {
-          print('Done clicked');
-          // TODO: Implement logic to capture data
-          setState(() {
-            _addingMob = false;
-          });
-        },
-        lastPoint: _points.isNotEmpty ? _points.last : null,
+      return AppBar(
+        title: Text('Adding Mob'),
+        actions: [
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: TextFormField(
+                onChanged: (value) {
+                  _mobName = value;
+                },
+                decoration: InputDecoration(labelText: 'Mob Name'),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.timer),
+            onPressed: () => selectTime(context, true),
+            tooltip: 'Select Lower Bound Time',
+          ),
+          IconButton(
+            icon: Icon(Icons.timer),
+            onPressed: () => selectTime(context, false),
+            tooltip: 'Select Upper Bound Time',
+          ),
+          ElevatedButton(
+            onPressed: () {
+              print('Done clicked');
+              // TODO: Implement logic to capture data
+              setState(() {
+                _addingMob = false;
+              });
+            },
+            child: Text('Done'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              print('Cancel clicked');
+              // TODO: Implement logic to erase new dot
+              setState(() {
+                _addingMob = false;
+                if (_points.isNotEmpty) _points.removeLast();  // remove the last added point
+              });
+            },
+            child: Text('Cancel'),
+          ),
+        ],
       );
     } else {
       return AppBar(
@@ -134,55 +232,6 @@ class _MapState extends State<Map> {
           )
         ],
       );
-    }
-  }
-
-  void menuOption(int option) async {
-    switch (option) {
-      case 0:
-        showDialog(
-            context: context,
-            builder: (context) {
-              return Dialog(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  height: MediaQuery.of(context).size.height * 0.8,
-                  child: GridView.builder(
-                    itemCount: mapOptions.length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // adjust as needed
-                    ),
-                    itemBuilder: (context, index) {
-                      return GestureDetector(
-                        onTap: () async {
-                          Navigator.of(context).pop();
-                          await Database(uid: _auth.user!.uid).addMap(
-                              new GameMap(
-                                  name: mapOptions[index],
-                                  selection: mapOptions[index]));
-                          setState(() {
-                            map = Database(uid: _auth.user!.uid).map;
-                          });
-                          await updateMaps(); // Fetch maps again after adding new one
-                        },
-                        child: Image.asset(
-                          'maps/${mapOptions[index]}.png',
-                          fit: BoxFit.cover,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              );
-            });
-        break;
-      case 1:
-        print('b2');
-        break;
-      case 2:
-        await _auth.signOut();
-        Navigator.pushReplacementNamed(context, '/');
-        break;
     }
   }
 
