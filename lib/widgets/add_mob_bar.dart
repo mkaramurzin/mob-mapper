@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 
 class AddMobAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Function() onCancel;
-  final Function(String, TimeOfDay?, TimeOfDay?, Offset?) onDone;
-  final Offset? lastPoint;
+  final Function(String, TimeOfDay?, TimeOfDay?, List<Offset> points) onDone;
+  final List<Offset> points;
 
-  AddMobAppBar({required this.onCancel, required this.onDone, required this.lastPoint, Key? key})
+  AddMobAppBar({required this.onCancel, required this.onDone, required this.points, Key? key})
       : preferredSize = Size.fromHeight(kToolbarHeight),
         super(key: key);
 

@@ -17,6 +17,7 @@ class _MapState extends State<Map> {
   Future<GameMap?>? map;
   List<GameMap>? userMaps;
   final List<Offset> _points = <Offset>[];
+  final List<Offset> _tempPoints = <Offset>[];
   bool _addingMob = false;
 
   @override
@@ -35,11 +36,8 @@ class _MapState extends State<Map> {
     if (!_addingMob) return;
 
     setState(() {
-      _points.add(details.localPosition);
-      _addingMob = false; // Reset the flag after adding a point
+      _tempPoints.add(details.localPosition);
     });
-
-    print('Point added: ${details.localPosition}');
   }
 
  PreferredSizeWidget buildAppBar(BuildContext context) {
@@ -48,17 +46,19 @@ class _MapState extends State<Map> {
         onCancel: () {
           setState(() {
             _addingMob = false;
-            if (_points.isNotEmpty) _points.removeLast();  // remove the last added point
+            _tempPoints.clear();
           });
         },
-        onDone: (mobName, lowerBound, upperBound, lastPoint) {
+        onDone: (mobName, lowerBound, upperBound, points) {
           print('Done clicked');
           // TODO: Implement logic to capture data
           setState(() {
             _addingMob = false;
+            _points.addAll(_tempPoints); // add temporary points to the main list
+            _tempPoints.clear();
           });
         },
-        lastPoint: _points.isNotEmpty ? _points.last : null,
+        points: _tempPoints,
       );
     } else {
       return AppBar(
@@ -186,6 +186,21 @@ class _MapState extends State<Map> {
     }
   }
 
+  Widget _buildPoint(Offset offset) {
+    return Positioned(
+        left: offset.dx - 10,
+        top: offset.dy - 10,
+        child: CircleAvatar(
+          backgroundColor: Colors.blue,
+          radius: 8,
+          child: CircleAvatar(
+            backgroundColor: Colors.green,
+            radius: 5,
+          ),
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -234,19 +249,8 @@ class _MapState extends State<Map> {
                 return const CircularProgressIndicator();
               },
             ),
-            ..._points.map(
-              (Offset offset) => Positioned(
-                  left: offset.dx - 10,
-                  top: offset.dy - 10,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.blue,
-                    radius: 8,
-                    child: CircleAvatar(
-                      backgroundColor: Colors.green,
-                      radius: 5,
-                    ),
-                  )),
-            ),
+            ..._points.map((Offset offset) => _buildPoint(offset)),
+            ..._tempPoints.map((Offset offset) => _buildPoint(offset)),
           ],
         ),
       ),
