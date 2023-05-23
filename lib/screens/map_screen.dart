@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/auth.dart';
+import 'package:mobmapper/services/auth.dart';
 import 'package:mobmapper/services/database.dart';
 import 'package:mobmapper/models/map.dart';
 import 'package:mobmapper/widgets/add_mob_bar.dart';
@@ -49,8 +49,10 @@ class _MapState extends State<Map> {
             _tempPoints.clear();
           });
         },
-        onDone: (mobName, lowerBound, upperBound, points) {
-          print('Done clicked');
+        onDone: (mobName, innerColor, outerColor, lowerBound, upperBound, points) {
+          print(mobName);
+          print(lowerBound);
+          print(upperBound);
           // TODO: Implement logic to capture data
           setState(() {
             _addingMob = false;
