@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:mobmapper/models/mob_dot.dart';
 import 'package:mobmapper/services/auth.dart';
 import 'package:mobmapper/services/database.dart';
 import 'package:mobmapper/models/map.dart';
 import 'package:mobmapper/widgets/add_mob_bar.dart';
+import 'package:mobmapper/services/color_extension.dart';
 
 class Map extends StatefulWidget {
   const Map({super.key});
@@ -16,8 +18,8 @@ class _MapState extends State<Map> {
   List mapOptions = ['silithus', 'ungoro'];
   Future<GameMap?>? map;
   List<GameMap>? userMaps;
-  final List<Offset> _points = <Offset>[];
-  final List<Offset> _tempPoints = <Offset>[];
+  List<MobDot> _points = [];
+  List<Offset> _tempPoints = <Offset>[];
   bool _addingMob = false;
 
   @override
@@ -26,10 +28,17 @@ class _MapState extends State<Map> {
     // Fetch the map data
     map = Database(uid: _auth.user!.uid).map;
     updateMaps(); // Fetch maps
+    updateDots(); // Fetch dots
   }
 
   Future<void> updateMaps() async {
     userMaps = await Database(uid: _auth.user!.uid).allMaps;
+  }
+
+  Future<void> updateDots() async {
+    _points = await Database(uid: _auth.user!.uid).getAllDots();
+    // _points = dots.expand((dot) => dot.points!).toList();
+    setState(() {}); // Update the state to trigger a rebuild
   }
 
   void _handleTap(TapUpDetails details) {
@@ -40,7 +49,7 @@ class _MapState extends State<Map> {
     });
   }
 
- PreferredSizeWidget buildAppBar(BuildContext context) {
+  PreferredSizeWidget buildAppBar(BuildContext context) {
     if (_addingMob) {
       return AddMobAppBar(
         onCancel: () {
@@ -49,16 +58,25 @@ class _MapState extends State<Map> {
             _tempPoints.clear();
           });
         },
-        onDone: (mobName, innerColor, outerColor, lowerBound, upperBound, points) {
+        onDone: (mobName, innerColor, outerColor, lowerBound, upperBound, points) async {
           print(mobName);
           print(lowerBound);
           print(upperBound);
-          // TODO: Implement logic to capture data
+          var mobDot = MobDot(
+              mobName: mobName,
+              innerColor: innerColor,
+              outerColor: outerColor,
+              lowerBound: lowerBound,
+              upperBound: upperBound,
+              points: _tempPoints
+          );
+          await Database(uid: _auth.user!.uid).addDot(mobDot);
           setState(() {
-            _addingMob = false;
-            _points.addAll(_tempPoints); // add temporary points to the main list
-            _tempPoints.clear();
+              _addingMob = false;
+              _points.add(mobDot); // add the new mob to the list of MobDots
+              _tempPoints.clear();
           });
+          updateDots(); // Fetch dots after adding a new mob
         },
         points: _tempPoints,
       );
@@ -80,6 +98,7 @@ class _MapState extends State<Map> {
                 onSelected: (GameMap result) {
                   setState(() {
                     map = Future.value(result);
+                    updateDots(); // Fetch dots for the new map
                   });
                 },
                 itemBuilder: (BuildContext context) {
@@ -188,19 +207,22 @@ class _MapState extends State<Map> {
     }
   }
 
-  Widget _buildPoint(Offset offset) {
+  Widget _buildPoint(MobDot? dot, Offset offset) {
+    Color outerColor = dot != null ? dot.outerColor.toColor() : Colors.blue;
+    Color innerColor = dot != null ? dot.innerColor.toColor() : Colors.green;
+
     return Positioned(
-        left: offset.dx - 10,
-        top: offset.dy - 10,
+      left: offset.dx - 10,
+      top: offset.dy - 10,
+      child: CircleAvatar(
+        backgroundColor: outerColor,
+        radius: 8,
         child: CircleAvatar(
-          backgroundColor: Colors.blue,
-          radius: 8,
-          child: CircleAvatar(
-            backgroundColor: Colors.green,
-            radius: 5,
-          ),
+          backgroundColor: innerColor,
+          radius: 5,
         ),
-      );
+      ),
+    );
   }
 
   @override
@@ -251,8 +273,8 @@ class _MapState extends State<Map> {
                 return const CircularProgressIndicator();
               },
             ),
-            ..._points.map((Offset offset) => _buildPoint(offset)),
-            ..._tempPoints.map((Offset offset) => _buildPoint(offset)),
+            ..._points.expand((dot) => dot.points!.map((offset) => _buildPoint(dot, offset))).toList(),
+            ..._tempPoints.map((Offset offset) => _buildPoint(null, offset)).toList(),
           ],
         ),
       ),

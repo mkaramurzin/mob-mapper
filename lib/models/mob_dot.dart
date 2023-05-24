@@ -6,7 +6,7 @@ class MobDot {
   String outerColor;
   int lowerBound;
   int upperBound;
-  List<Offset> points;
+  List<Offset>? points;
 
   MobDot(
       {this.mobName = "",
@@ -14,5 +14,6 @@ class MobDot {
       this.outerColor = "#000000",
       this.lowerBound = 0,
       this.upperBound = 0,
-      required this.points});
+      required this.points}
+  );
 }

@@ -1,8 +1,8 @@
 X Users should be able to create a new map instance from the available map images so that they can have a collection of area maps
 X Users should be able to place dots on a map so that they can keep track of a rare mob's spawn locations
-Users should be able to name the dots they place so that they know which rare mob the dot represents
-Users should be able to assign a upper and lower bound spawn timer to the dots so they know when the rare mob is spawning
-Users should be able to customize the dots so they are distinguishable from other mob dots
+X Users should be able to name the dots they place so that they know which rare mob the dot represents
+X Users should be able to assign a upper and lower bound spawn timer to the dots so they know when the rare mob is spawning
+X Users should be able to customize the dots so they are distinguishable from other mob dots
 When a user clicks a mob dot, it should highlight all the mob dots with the same mob and timer 
 Users should be able to reset the mob spawn timers so that they can align the timer to the in-game spawn time
 Users should be able to delete mob dots so that they can unclutter the map
@@ -29,3 +29,8 @@ Users (collection)
                         lower bound timer (field)
                         upper bound timer (field)
                         dot coordinates: [[x,y], [x,y], [x,y]] (field)
+
+Limitations encountered:
+
+1. I wasn't able to create a map screen that would appropriately re-draw the points in the correct spot after a user resizes the browser (zoom or fullscreen). Because of this, users have to keep the same browser size and zoom scale whenever using the app.
+2. I wasn't able to change the color of the dots drawn during in add mob mode according to the color picker options; the color only matches the selection when the dots are stored in firebase.

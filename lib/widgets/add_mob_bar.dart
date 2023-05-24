@@ -4,7 +4,7 @@ import 'package:mobmapper/widgets/color_picker.dart';
 
 class AddMobAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Function() onCancel;
-  final Function(String?, String?, String?, int?, int?, List<Offset> points) onDone;
+  final Function(String, String, String, int, int, List<Offset>? points) onDone;
   final List<Offset> points;
 
   AddMobAppBar({
@@ -57,15 +57,19 @@ class _AddMobAppBarState extends State<AddMobAppBar> {
   }
 
   void onInnerColorChanged(String color) {
-    setState(() {
-      innerColor = color;
-    });
+    if(mounted) {
+      setState(() {
+        innerColor = color;
+      });
+    }
   }
 
   void onOuterColorChanged(String color) {
-    setState(() {
-      outerColor = color;
-    });
+    if(mounted) {
+      setState(() {
+        outerColor = color;
+      });
+    }
   }
 
   void _validateAndSubmit() {
