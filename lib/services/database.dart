@@ -37,6 +37,8 @@ class Database {
         name: snapshot.get('name'), selection: snapshot.get('selection'));
   }
 
+  
+
   Future<List<GameMap>> get allMaps async {
     QuerySnapshot querySnapshot =
         await userCollection.doc(uid).collection('maps').get();

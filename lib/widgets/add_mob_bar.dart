@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobmapper/widgets/color_picker.dart';
+import 'package:mobmapper/services/color_extension.dart';
 
 class AddMobAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Function() onCancel;
@@ -284,6 +285,17 @@ class _AddMobAppBarState extends State<AddMobAppBar> {
           initialOuterColor: outerColor,
           onInnerColorChanged: onInnerColorChanged,
           onOuterColorChanged: onOuterColorChanged,
+        ),
+        Container(
+          margin: EdgeInsets.fromLTRB(10, 0, 10, 0),
+          child: CircleAvatar(
+            backgroundColor: outerColor.toColor(),
+            radius: 8,
+            child: CircleAvatar(
+              backgroundColor: innerColor.toColor(),
+              radius: 5,
+            ),
+          ),
         ),
         ElevatedButton(
           onPressed: _validateAndSubmit,

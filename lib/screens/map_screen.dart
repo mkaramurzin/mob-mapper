@@ -19,6 +19,7 @@ class _MapState extends State<Map> {
   Future<GameMap?>? map;
   List<GameMap>? userMaps;
   List<MobDot> _points = [];
+  MobDot? _selectedDot;
   List<Offset> _tempPoints = <Offset>[];
   bool _addingMob = false;
 
@@ -38,15 +39,19 @@ class _MapState extends State<Map> {
   Future<void> updateDots() async {
     _points = await Database(uid: _auth.user!.uid).getAllDots();
     // _points = dots.expand((dot) => dot.points!).toList();
-    setState(() {}); // Update the state to trigger a rebuild
+    if (mounted) {
+      setState(() {}); // Update the state to trigger a rebuild
+    }
   }
 
   void _handleTap(TapUpDetails details) {
     if (!_addingMob) return;
 
-    setState(() {
-      _tempPoints.add(details.localPosition);
-    });
+    if (mounted) {
+      setState(() {
+        _tempPoints.add(details.localPosition);
+      });
+    }
   }
 
   PreferredSizeWidget buildAppBar(BuildContext context) {
@@ -207,19 +212,49 @@ class _MapState extends State<Map> {
     }
   }
 
-  Widget _buildPoint(MobDot? dot, Offset offset) {
-    Color outerColor = dot != null ? dot.outerColor.toColor() : Colors.blue;
-    Color innerColor = dot != null ? dot.innerColor.toColor() : Colors.green;
+  Widget _buildPoint(MobDot? dot, Offset offset, bool selected) {
+    Color outerColor = dot != null ? dot.outerColor.toColor() : Colors.black;
+    Color innerColor = dot != null ? dot.innerColor.toColor() : Colors.black;
 
     return Positioned(
       left: offset.dx - 10,
       top: offset.dy - 10,
-      child: CircleAvatar(
-        backgroundColor: outerColor,
-        radius: 8,
-        child: CircleAvatar(
-          backgroundColor: innerColor,
-          radius: 5,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedDot = dot;
+          });
+        },
+        child: Material(
+          borderRadius: BorderRadius.circular(8),
+          elevation: selected ? 10.0 : 0.0, // Higher elevation for selected dots
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: outerColor,
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: Colors.yellow.withOpacity(1.0),
+                        spreadRadius: 3,
+                        blurRadius: 7,
+                        offset: Offset(0, 0), // changes position of shadow
+                      ),
+                    ]
+                  : [], // Show glow effect only for selected dots
+            ),
+            child: Opacity(
+              opacity: selected ? 1.0 : 0.8, // Lower opacity for non-selected dots
+              child: CircleAvatar(
+                backgroundColor: outerColor,
+                radius: 8,
+                child: CircleAvatar(
+                  backgroundColor: innerColor,
+                  radius: 5,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -273,8 +308,8 @@ class _MapState extends State<Map> {
                 return const CircularProgressIndicator();
               },
             ),
-            ..._points.expand((dot) => dot.points!.map((offset) => _buildPoint(dot, offset))).toList(),
-            ..._tempPoints.map((Offset offset) => _buildPoint(null, offset)).toList(),
+            ..._points.expand((dot) => dot.points!.map((offset) => _buildPoint(dot, offset, dot == _selectedDot))).toList(),
+            ..._tempPoints.map((Offset offset) => _buildPoint(null, offset, false)).toList(),
           ],
         ),
       ),

@@ -7,6 +7,7 @@ class MobDot {
   int lowerBound;
   int upperBound;
   List<Offset>? points;
+  bool selected = false;  // add this line
 
   MobDot(
       {this.mobName = "",
