@@ -31,7 +31,8 @@ Users (collection)
                         upper bound timer (field)
                         dot coordinates: [[x,y], [x,y], [x,y]] (field)
 
-Limitations encountered:
 
+Limitations encountered:
 1. I wasn't able to create a map screen that would appropriately re-draw the points in the correct spot after a user resizes the browser (zoom or fullscreen). Because of this, users have to keep the same browser size and zoom scale whenever using the app.
 2. I wasn't able to change the color of the dots drawn during in add mob mode according to the color picker options; the color only matches the selection when the dots are stored in firebase.
+3. I wasn't able to use StreamBuilder for maps and dots because it would cause the entire UI to fully reload after clicking on a dot, which is annoying for users and isn't the case when using FutureBuilder.

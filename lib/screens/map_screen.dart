@@ -6,6 +6,7 @@ import 'package:mobmapper/services/database.dart';
 import 'package:mobmapper/models/map.dart';
 import 'package:mobmapper/widgets/add_mob_bar.dart';
 import 'package:mobmapper/services/color_extension.dart';
+import 'package:mobmapper/widgets/timer.dart';
 
 class Map extends StatefulWidget {
   const Map({super.key});
@@ -64,14 +65,17 @@ class _MapState extends State<Map> {
             _tempPoints.clear();
           });
         },
-        onDone: (mobName, innerColor, outerColor, lowerBound, upperBound, points) async {
+        onDone: (mobName, innerColor, outerColor, lowerBound, upperBound,
+            points) async {
           print(mobName);
           print(lowerBound);
           print(upperBound);
 
           final Timestamp now = Timestamp.now();
-          final Timestamp lowerBoundTimestamp = Timestamp(now.seconds + lowerBound * 60, now.nanoseconds);
-          final Timestamp upperBoundTimestamp = Timestamp(now.seconds + upperBound * 60, now.nanoseconds);
+          final Timestamp lowerBoundTimestamp =
+              Timestamp(now.seconds + lowerBound * 60, now.nanoseconds);
+          final Timestamp upperBoundTimestamp =
+              Timestamp(now.seconds + upperBound * 60, now.nanoseconds);
           var mobDot = MobDot(
               mobName: mobName,
               innerColor: innerColor,
@@ -80,13 +84,13 @@ class _MapState extends State<Map> {
               upperBound: upperBound,
               lowerBoundTimestamp: lowerBoundTimestamp,
               upperBoundTimestamp: upperBoundTimestamp,
-              points: _tempPoints
-          );
-          await Database(uid: _auth.user!.uid).addDot(mobDot);
+              points: _tempPoints);
+          mobDot.docId = await Database(uid: _auth.user!.uid).addDot(mobDot);
+          print(mobDot.docId);
           setState(() {
-              _addingMob = false;
-              _points.add(mobDot); // add the new mob to the list of MobDots
-              _tempPoints.clear();
+            _addingMob = false;
+            _points.add(mobDot); // add the new mob to the list of MobDots
+            _tempPoints.clear();
           });
           updateDots(); // Fetch dots after adding a new mob
         },
@@ -105,6 +109,22 @@ class _MapState extends State<Map> {
                 color: Colors.white,
               ),
             ),
+            CountdownTimerWidget(
+                lowerBoundTimestamp:
+                    _selectedDot?.lowerBoundTimestamp ?? Timestamp.now(),
+                upperBoundTimestamp:
+                    _selectedDot?.upperBoundTimestamp ?? Timestamp.now()),
+            IconButton(
+              onPressed: () {
+                if(_selectedDot != null) {
+                  setState(() async {
+                    await Database(uid: _auth.user!.uid)
+                    .updateTimestamps(_selectedDot!);
+                  });
+                }
+              },
+              icon: Icon(Icons.refresh),
+            ),
             // This empty container serves to keep the mob name centered.
             Container(
               width: MediaQuery.of(context).size.width * 0.2,
@@ -112,14 +132,6 @@ class _MapState extends State<Map> {
           ],
         ),
         actions: [
-          Center(
-            child: Container(
-              margin: EdgeInsets.fromLTRB(20, 0, 20, 0),
-              child: Text(
-                _selectedDot?.mobName ?? "",
-              ),
-            ),
-          ),
           MouseRegion(
             child: GestureDetector(
               onTap: () async {
@@ -136,7 +148,8 @@ class _MapState extends State<Map> {
                     map = Future.value(result);
                     updateDots(); // Fetch dots for the new map
                   });
-                  await Database(uid: _auth.user!.uid).setUserData({"currentMap": result.docId});
+                  await Database(uid: _auth.user!.uid)
+                      .setUserData({"currentMap": result.docId});
                 },
                 itemBuilder: (BuildContext context) {
                   return (userMaps ?? []).map((GameMap map) {
@@ -214,7 +227,8 @@ class _MapState extends State<Map> {
                       return GestureDetector(
                         onTap: () async {
                           Navigator.of(context).pop();
-                          await Database(uid: _auth.user!.uid).addMap(mapOptions[index]);
+                          await Database(uid: _auth.user!.uid)
+                              .addMap(mapOptions[index]);
                           setState(() {
                             map = Database(uid: _auth.user!.uid).map;
                           });
@@ -256,7 +270,8 @@ class _MapState extends State<Map> {
         },
         child: Material(
           borderRadius: BorderRadius.circular(8),
-          elevation: selected ? 10.0 : 0.0, // Higher elevation for selected dots
+          elevation:
+              selected ? 10.0 : 0.0, // Higher elevation for selected dots
           child: DecoratedBox(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
@@ -273,7 +288,8 @@ class _MapState extends State<Map> {
                   : [], // Show glow effect only for selected dots
             ),
             child: Opacity(
-              opacity: selected ? 1.0 : 0.8, // Lower opacity for non-selected dots
+              opacity:
+                  selected ? 1.0 : 0.8, // Lower opacity for non-selected dots
               child: CircleAvatar(
                 backgroundColor: outerColor,
                 radius: 8,
@@ -334,11 +350,16 @@ class _MapState extends State<Map> {
                     );
                   }
                 }
-                return const CircularProgressIndicator();
+                return const Center(child: CircularProgressIndicator());
               },
             ),
-            ..._points.expand((dot) => dot.points!.map((offset) => _buildPoint(dot, offset, dot == _selectedDot))).toList(),
-            ..._tempPoints.map((Offset offset) => _buildPoint(null, offset, false)).toList(),
+            ..._points
+                .expand((dot) => dot.points!.map(
+                    (offset) => _buildPoint(dot, offset, dot == _selectedDot)))
+                .toList(),
+            ..._tempPoints
+                .map((Offset offset) => _buildPoint(null, offset, false))
+                .toList(),
           ],
         ),
       ),
