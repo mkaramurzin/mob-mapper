@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mobmapper/models/mob_dot.dart';
 import 'package:mobmapper/services/auth.dart';
@@ -67,12 +68,18 @@ class _MapState extends State<Map> {
           print(mobName);
           print(lowerBound);
           print(upperBound);
+
+          final Timestamp now = Timestamp.now();
+          final Timestamp lowerBoundTimestamp = Timestamp(now.seconds + lowerBound * 60, now.nanoseconds);
+          final Timestamp upperBoundTimestamp = Timestamp(now.seconds + upperBound * 60, now.nanoseconds);
           var mobDot = MobDot(
               mobName: mobName,
               innerColor: innerColor,
               outerColor: outerColor,
               lowerBound: lowerBound,
               upperBound: upperBound,
+              lowerBoundTimestamp: lowerBoundTimestamp,
+              upperBoundTimestamp: upperBoundTimestamp,
               points: _tempPoints
           );
           await Database(uid: _auth.user!.uid).addDot(mobDot);
@@ -87,8 +94,32 @@ class _MapState extends State<Map> {
       );
     } else {
       return AppBar(
-        title: Text('Mob Mapper'),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Your App Title'),
+            Text(
+              _selectedDot?.mobName ?? '',
+              style: TextStyle(
+                fontSize: 18.0,
+                color: Colors.white,
+              ),
+            ),
+            // This empty container serves to keep the mob name centered.
+            Container(
+              width: MediaQuery.of(context).size.width * 0.2,
+            ),
+          ],
+        ),
         actions: [
+          Center(
+            child: Container(
+              margin: EdgeInsets.fromLTRB(20, 0, 20, 0),
+              child: Text(
+                _selectedDot?.mobName ?? "",
+              ),
+            ),
+          ),
           MouseRegion(
             child: GestureDetector(
               onTap: () async {
@@ -100,11 +131,12 @@ class _MapState extends State<Map> {
                   onPressed: null, // Disable default action
                   child: Text('Maps', style: TextStyle(color: Colors.white)),
                 ),
-                onSelected: (GameMap result) {
+                onSelected: (GameMap result) async {
                   setState(() {
                     map = Future.value(result);
                     updateDots(); // Fetch dots for the new map
                   });
+                  await Database(uid: _auth.user!.uid).setUserData({"currentMap": result.docId});
                 },
                 itemBuilder: (BuildContext context) {
                   return (userMaps ?? []).map((GameMap map) {
@@ -182,10 +214,7 @@ class _MapState extends State<Map> {
                       return GestureDetector(
                         onTap: () async {
                           Navigator.of(context).pop();
-                          await Database(uid: _auth.user!.uid).addMap(
-                              new GameMap(
-                                  name: mapOptions[index],
-                                  selection: mapOptions[index]));
+                          await Database(uid: _auth.user!.uid).addMap(mapOptions[index]);
                           setState(() {
                             map = Database(uid: _auth.user!.uid).map;
                           });

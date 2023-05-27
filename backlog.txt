@@ -3,8 +3,9 @@ X Users should be able to place dots on a map so that they can keep track of a r
 X Users should be able to name the dots they place so that they know which rare mob the dot represents
 X Users should be able to assign a upper and lower bound spawn timer to the dots so they know when the rare mob is spawning
 X Users should be able to customize the dots so they are distinguishable from other mob dots
-When a user clicks a mob dot, it should highlight all the mob dots with the same mob and timer 
+X When a user clicks a mob dot, it should highlight all the mob dots with the same mob and timer 
 Users should be able to reset the mob spawn timers so that they can align the timer to the in-game spawn time
+Userse should be able to search for a mob by name so they don't have to manually search for it
 Users should be able to delete mob dots so that they can unclutter the map
 Users should be able to select and change the displayed map to other maps in their collection so they can track mobs in multiple locations
 Users should be able to share their map with other users so that they can colaborate on rare mob tags

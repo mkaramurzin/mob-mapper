@@ -12,13 +12,15 @@ class Database {
   final CollectionReference userCollection =
       FirebaseFirestore.instance.collection('users');
 
-  Future<void> setUserData() async {}
+  Future<void> setUserData(Map<String, dynamic> userData) async {
+    await userCollection.doc(uid).set(userData, SetOptions(merge: true));
+  }
 
-  Future<void> addMap(GameMap map) async {
+  Future<void> addMap(String selection) async {
     final DocumentReference docRef = await userCollection
         .doc(uid)
         .collection("maps")
-        .add({"selection": map.name, "name": map.selection});
+        .add({"selection": selection, "name": selection});
 
     final String docId = docRef.id;
     await userCollection.doc(uid).set({"currentMap": docId});
@@ -34,7 +36,7 @@ class Database {
     snapshot =
         await userCollection.doc(uid).collection('maps').doc(docId).get();
     return new GameMap(
-        name: snapshot.get('name'), selection: snapshot.get('selection'));
+        name: snapshot.get('name'), selection: snapshot.get('selection'), docId: docId);
   }
 
   
@@ -43,7 +45,7 @@ class Database {
     QuerySnapshot querySnapshot =
         await userCollection.doc(uid).collection('maps').get();
     return querySnapshot.docs.map((doc) {
-      return GameMap(name: doc.get('name'), selection: doc.get('selection'));
+      return GameMap(name: doc.get('name'), selection: doc.get('selection'), docId: doc.id);
     }).toList();
   }
 
@@ -57,6 +59,14 @@ class Database {
     List<Map<String, double>> convertedPoints = dot.points!.map((offset) {
       return {'x': offset.dx, 'y': offset.dy};
     }).toList();
+
+    // Get the current server timestamp
+    final Timestamp now = Timestamp.now();
+
+    // Calculate the lower and upper bound timestamps
+    final Timestamp lowerBoundTimestamp = Timestamp(now.seconds + dot.lowerBound * 60, now.nanoseconds);
+    final Timestamp upperBoundTimestamp = Timestamp(now.seconds + dot.upperBound * 60, now.nanoseconds);
+
     await userCollection
         .doc(uid)
         .collection('maps')
@@ -68,6 +78,8 @@ class Database {
       'outerColor': dot.outerColor,
       'lowerBound': dot.lowerBound,
       'upperBound': dot.upperBound,
+      'lowerBoundTimestamp': lowerBoundTimestamp,
+      'upperBoundTimestamp': upperBoundTimestamp,
       'points': convertedPoints,
     });
   }
@@ -107,6 +119,8 @@ class Database {
           outerColor: data['outerColor'],
           lowerBound: data['lowerBound'],
           upperBound: data['upperBound'],
+          lowerBoundTimestamp: data['lowerBoundTimestamp'],
+          upperBoundTimestamp: data['upperBoundTimestamp'],
           points: points);
     }).toList();
   }

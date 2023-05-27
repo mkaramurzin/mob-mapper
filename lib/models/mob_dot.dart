@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class MobDot {
@@ -6,6 +7,8 @@ class MobDot {
   String outerColor;
   int lowerBound;
   int upperBound;
+  Timestamp lowerBoundTimestamp;  // Add this line
+  Timestamp upperBoundTimestamp;  // Add this line
   List<Offset>? points;
   bool selected = false;  // add this line
 
@@ -15,6 +18,8 @@ class MobDot {
       this.outerColor = "#000000",
       this.lowerBound = 0,
       this.upperBound = 0,
+      required this.lowerBoundTimestamp,
+      required this.upperBoundTimestamp,
       required this.points}
   );
 }
