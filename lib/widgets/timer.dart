@@ -4,10 +4,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class CountdownTimerWidget extends StatefulWidget {
-  final Timestamp lowerBoundTimestamp;
-  final Timestamp upperBoundTimestamp;
+  Timestamp lowerBoundTimestamp;
+  Timestamp upperBoundTimestamp;
+  bool show;
+  String mobName;
+  final Function() reset;
 
-  CountdownTimerWidget({required this.lowerBoundTimestamp, required this.upperBoundTimestamp});
+  CountdownTimerWidget(
+      {required this.lowerBoundTimestamp,
+      required this.upperBoundTimestamp,
+      required this.show,
+      required this.mobName,
+      required this.reset});
 
   @override
   _CountdownTimerWidgetState createState() => _CountdownTimerWidgetState();
@@ -23,15 +31,18 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
   void initState() {
     super.initState();
     // calculate initial remaining duration
-    lowerBoundRemaining = widget.lowerBoundTimestamp.toDate().difference(DateTime.now());
-    upperBoundRemaining = widget.upperBoundTimestamp.toDate().difference(DateTime.now());
+    lowerBoundRemaining =
+        widget.lowerBoundTimestamp.toDate().difference(DateTime.now());
+    upperBoundRemaining =
+        widget.upperBoundTimestamp.toDate().difference(DateTime.now());
     startTimers();
   }
 
   @override
   void didUpdateWidget(covariant CountdownTimerWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if(oldWidget.lowerBoundTimestamp != widget.lowerBoundTimestamp || oldWidget.upperBoundTimestamp != widget.upperBoundTimestamp){
+    if (oldWidget.lowerBoundTimestamp != widget.lowerBoundTimestamp ||
+        oldWidget.upperBoundTimestamp != widget.upperBoundTimestamp) {
       // Timestamps changed
       lowerBoundTimer?.cancel();
       upperBoundTimer?.cancel();
@@ -41,8 +52,10 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
 
   void startTimers() {
     // calculate remaining duration
-    lowerBoundRemaining = widget.lowerBoundTimestamp.toDate().difference(DateTime.now());
-    upperBoundRemaining = widget.upperBoundTimestamp.toDate().difference(DateTime.now());
+    lowerBoundRemaining =
+        widget.lowerBoundTimestamp.toDate().difference(DateTime.now());
+    upperBoundRemaining =
+        widget.upperBoundTimestamp.toDate().difference(DateTime.now());
 
     // lowerBound timer
     lowerBoundTimer = Timer.periodic(Duration(seconds: 1), (timer) {
@@ -76,11 +89,28 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.show) {
+      return Container(); // Return an empty container if show is false
+    }
+
     return Row(
       children: [
+        Container(
+          margin: EdgeInsets.fromLTRB(0, 0, 20, 0),
+          child: Text(
+            widget.mobName,
+          ),
+        ),
         Text(formatDuration(lowerBoundRemaining)),
-        SizedBox(width: 25,),
+        Container(
+          margin: EdgeInsets.fromLTRB(10, 0, 10, 0),
+          child: Center(child: Text('-')),
+        ),
         Text(formatDuration(upperBoundRemaining)),
+        SizedBox(
+          width: 25,
+        ),
+        IconButton(onPressed: widget.reset, icon: Icon(Icons.refresh), tooltip: 'Restart Timers',)
       ],
     );
   }

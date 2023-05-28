@@ -17,7 +17,7 @@ class Map extends StatefulWidget {
 
 class _MapState extends State<Map> {
   final AuthService _auth = AuthService();
-  List mapOptions = ['silithus', 'ungoro'];
+  List mapOptions = ['silithus', 'ungoro', 'badlands'];
   Future<GameMap?>? map;
   List<GameMap>? userMaps;
   List<MobDot> _points = [];
@@ -101,33 +101,31 @@ class _MapState extends State<Map> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Your App Title'),
-            Text(
-              _selectedDot?.mobName ?? '',
-              style: TextStyle(
-                fontSize: 18.0,
-                color: Colors.white,
-              ),
-            ),
+            Text('MobMapper'),
             CountdownTimerWidget(
-                lowerBoundTimestamp:
-                    _selectedDot?.lowerBoundTimestamp ?? Timestamp.now(),
-                upperBoundTimestamp:
-                    _selectedDot?.upperBoundTimestamp ?? Timestamp.now()),
-            IconButton(
-              onPressed: () {
-                if(_selectedDot != null) {
-                  setState(() async {
-                    await Database(uid: _auth.user!.uid)
-                    .updateTimestamps(_selectedDot!);
-                  });
+              lowerBoundTimestamp:
+                  _selectedDot?.lowerBoundTimestamp ?? Timestamp.now(),
+              upperBoundTimestamp:
+                  _selectedDot?.upperBoundTimestamp ?? Timestamp.now(),
+              show: _selectedDot == null ? false : true,
+              mobName: _selectedDot?.mobName ?? '',
+              reset: () async {
+                final Database db = Database(uid: _auth.user!.uid);
+                await db.updateTimestamps(_selectedDot!);
+                _points = await db.getAllDots();
+                
+                // Reselect the _selectedDot based on its docId
+                if (_selectedDot != null) {
+                  final selectedDotId = _selectedDot!.docId;
+                  _selectedDot = _points.firstWhere((dot) => dot.docId == selectedDotId);
                 }
-              },
-              icon: Icon(Icons.refresh),
+
+                setState(() {});
+              }
             ),
             // This empty container serves to keep the mob name centered.
             Container(
-              width: MediaQuery.of(context).size.width * 0.2,
+              width: 0,
             ),
           ],
         ),
