@@ -5,7 +5,9 @@ X Users should be able to assign a upper and lower bound spawn timer to the dots
 X Users should be able to customize the dots so they are distinguishable from other mob dots
 X When a user clicks a mob dot, it should highlight all the mob dots with the same mob and timer 
 X Users should be able to reset the mob spawn timers so that they can align the timer to the in-game spawn time
-Userse should be able to search for a mob by name so they don't have to manually search for it
+X Users should first draw their mob dots and then fill in the other parameters so there's a clear and gradual process flow to adding a mob
+X Users should be able to undo actions during add mob mode so that they don't have to start from scratch if they misclick
+Users should be able to search for a mob by name so they don't have to manually search for it
 Users should be able to delete mob dots so that they can unclutter the map
 Users should be able to select and change the displayed map to other maps in their collection so they can track mobs in multiple locations
 Users should be able to share their map with other users so that they can colaborate on rare mob tags

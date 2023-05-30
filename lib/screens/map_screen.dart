@@ -23,7 +23,7 @@ class _MapState extends State<Map> {
   List<MobDot> _points = [];
   MobDot? _selectedDot;
   List<Offset> _tempPoints = <Offset>[];
-  bool _addingMob = false;
+  int _addingMobPhase = 0;
 
   @override
   void initState() {
@@ -47,7 +47,7 @@ class _MapState extends State<Map> {
   }
 
   void _handleTap(TapUpDetails details) {
-    if (!_addingMob) return;
+    if (_addingMobPhase != 1) return;
 
     if (mounted) {
       setState(() {
@@ -57,11 +57,11 @@ class _MapState extends State<Map> {
   }
 
   PreferredSizeWidget buildAppBar(BuildContext context) {
-    if (_addingMob) {
+    if (_addingMobPhase == 2) {
       return AddMobAppBar(
         onCancel: () {
           setState(() {
-            _addingMob = false;
+            _addingMobPhase = 0;
             _tempPoints.clear();
           });
         },
@@ -88,13 +88,63 @@ class _MapState extends State<Map> {
           mobDot.docId = await Database(uid: _auth.user!.uid).addDot(mobDot);
           print(mobDot.docId);
           setState(() {
-            _addingMob = false;
+            _addingMobPhase = 0;
             _points.add(mobDot); // add the new mob to the list of MobDots
             _tempPoints.clear();
           });
           updateDots(); // Fetch dots after adding a new mob
         },
         points: _tempPoints,
+      );
+    } else if (_addingMobPhase == 1) {
+      return AppBar(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Adding Mob'),
+            Row(
+              children: [
+                IconButton( // undo
+                  onPressed: () {
+                    if (mounted) {
+                      setState(() {
+                        _tempPoints.removeLast();
+                      });
+                    }
+                  },
+                  icon: Icon(Icons.undo),
+                ),
+                SizedBox(width: 20),
+                Container(
+                  height: kToolbarHeight,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_tempPoints.length != 0) {
+                        setState(() {
+                          _addingMobPhase = 2;
+                        });
+                      }
+                    },
+                    child: Text('Next'),
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              height: kToolbarHeight,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () {
+                  setState(() {
+                    _addingMobPhase = 0;
+                    _tempPoints.clear();
+                  });
+                },
+                child: Text('Cancel'),
+              ),
+            ),
+          ],
+        )
       );
     } else {
       return AppBar(
@@ -103,26 +153,26 @@ class _MapState extends State<Map> {
           children: [
             Text('MobMapper'),
             CountdownTimerWidget(
-              lowerBoundTimestamp:
-                  _selectedDot?.lowerBoundTimestamp ?? Timestamp.now(),
-              upperBoundTimestamp:
-                  _selectedDot?.upperBoundTimestamp ?? Timestamp.now(),
-              show: _selectedDot == null ? false : true,
-              mobName: _selectedDot?.mobName ?? '',
-              reset: () async {
-                final Database db = Database(uid: _auth.user!.uid);
-                await db.updateTimestamps(_selectedDot!);
-                _points = await db.getAllDots();
-                
-                // Reselect the _selectedDot based on its docId
-                if (_selectedDot != null) {
-                  final selectedDotId = _selectedDot!.docId;
-                  _selectedDot = _points.firstWhere((dot) => dot.docId == selectedDotId);
-                }
+                lowerBoundTimestamp:
+                    _selectedDot?.lowerBoundTimestamp ?? Timestamp.now(),
+                upperBoundTimestamp:
+                    _selectedDot?.upperBoundTimestamp ?? Timestamp.now(),
+                show: _selectedDot == null ? false : true,
+                mobName: _selectedDot?.mobName ?? '',
+                reset: () async {
+                  final Database db = Database(uid: _auth.user!.uid);
+                  await db.updateTimestamps(_selectedDot!);
+                  _points = await db.getAllDots();
 
-                setState(() {});
-              }
-            ),
+                  // Reselect the _selectedDot based on its docId
+                  if (_selectedDot != null) {
+                    final selectedDotId = _selectedDot!.docId;
+                    _selectedDot =
+                        _points.firstWhere((dot) => dot.docId == selectedDotId);
+                  }
+
+                  setState(() {});
+                }),
             // This empty container serves to keep the mob name centered.
             Container(
               width: 0,
@@ -156,7 +206,7 @@ class _MapState extends State<Map> {
                       child: Row(
                         children: <Widget>[
                           Image.asset(
-                            'maps/${map.selection}.png',
+                            'assets/${map.selection}.png',
                             width: 50,
                             height: 50,
                           ),
@@ -173,7 +223,7 @@ class _MapState extends State<Map> {
           ElevatedButton(
             onPressed: () {
               setState(() {
-                _addingMob = true;
+                _addingMobPhase = 1;
               });
             },
             child: Text('Add Mob'),
@@ -233,7 +283,7 @@ class _MapState extends State<Map> {
                           await updateMaps(); // Fetch maps again after adding new one
                         },
                         child: Image.asset(
-                          'maps/${mapOptions[index]}.png',
+                          'assets/${mapOptions[index]}.png',
                           fit: BoxFit.cover,
                         ),
                       );
@@ -326,12 +376,15 @@ class _MapState extends State<Map> {
                   } else if (snapshot.hasData) {
                     final map = snapshot.data!;
                     return Positioned.fill(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTapUp: _handleTap,
-                        child: Image.asset(
-                          'maps/${map.selection}.png',
-                          fit: BoxFit.contain,
+                      child: Opacity(
+                        opacity: _addingMobPhase == 1 ? 0.5 : 1.0,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTapUp: _handleTap,
+                          child: Image.asset(
+                            'assets/${map.selection}.png',
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                     );
@@ -358,6 +411,14 @@ class _MapState extends State<Map> {
             ..._tempPoints
                 .map((Offset offset) => _buildPoint(null, offset, false))
                 .toList(),
+            if (_addingMobPhase == 1 && _tempPoints.length == 0)  // Check if _showInstructions is true
+              Align(
+                alignment: Alignment.topCenter,
+                child: Text(
+                  'Click on locations where the mob could be',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              ),
           ],
         ),
       ),

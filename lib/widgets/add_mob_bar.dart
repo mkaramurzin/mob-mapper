@@ -302,6 +302,7 @@ class _AddMobAppBarState extends State<AddMobAppBar> {
           child: Text('Done'),
         ),
         ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
           onPressed: widget.onCancel,
           child: Text('Cancel'),
         ),

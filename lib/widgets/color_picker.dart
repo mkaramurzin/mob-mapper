@@ -144,6 +144,7 @@ class _ControlledColorPickerWidgetState extends State<ControlledColorPickerWidge
         ),
         IconButton(
           icon: Icon(Icons.refresh),
+          tooltip: 'Random Colors',
           onPressed: randomizeColors,
         ),
       ],
